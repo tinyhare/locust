@@ -690,3 +690,48 @@ class LocustProcessIntegrationTest(TestCase):
             self.assertIn("Waiting for workers to be ready, 0 of 2 connected", stderr)
             self.assertIn("Gave up waiting for workers to connect", stderr)
             self.assertEqual(1, proc.returncode)
+
+    def test_distributed(self):
+        with mock_locustfile() as mocked:
+            proc = subprocess.Popen(
+                [
+                    "locust",
+                    "-f",
+                    mocked.file_path,
+                    "--headless",
+                    "--master",
+                    "--expect-workers",
+                    "5",
+                    "-t",
+                    "3",
+                    "-u",
+                    "3",
+                    "-r",
+                    "1",
+                    "--exit-code-on-error",
+                    "0",
+                ],
+                stdout=PIPE,
+                stderr=PIPE,
+            )
+            gevent.sleep(0.2)
+            for _ in range(5):
+                proc_worker = subprocess.Popen(
+                    [
+                        "locust",
+                        "-f",
+                        mocked.file_path,
+                        "--worker",
+                    ],
+                    stdout=PIPE,
+                    stderr=PIPE,
+                )
+
+            _, stderr = proc.communicate()
+            _, worker_stderr = proc_worker.communicate()
+            stderr = stderr.decode("utf-8")
+            worker_stderr = worker_stderr.decode("utf-8")
+            self.assertIn("Waiting for workers to be ready", stderr)
+            self.assertIn('All users spawned: {"UserSubclass": 3} (3 total users)', stderr)
+            self.assertIn("Got quit message from master", worker_stderr)
+            self.assertEqual(0, proc.returncode)
