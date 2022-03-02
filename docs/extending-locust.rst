@@ -16,7 +16,7 @@ For example, here's how to set up an event listener that will trigger after a re
         if exception:
             print(f"Request to {name} failed with exception {exception}")
         else:
-            print(f"Successfully made a request to: {name})
+            print(f"Successfully made a request to: {name}")
             print(f"The response was {response.text}")
 
 .. note::
